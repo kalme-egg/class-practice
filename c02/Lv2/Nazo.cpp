@@ -5,14 +5,14 @@ using namespace std;
 
 Nazo::Nazo(void )										// コンストラクタは長さに関わらずcppファイルに置く 返り値は書かない
 {														// 初期状態を考えながら書く
-	this->setAge(0);									// デフォルトなら0才
 	this->setAlive(true);								// 最初は生きてる
+	this->setAge(0);									// デフォルトなら0才
 }														// returnもいらない
 
 Nazo::Nazo(int age)										// 年令を指定するコンストラクタ
 {														// 初期状態を考えながら書く
-	this->setAge(age);									// 指定された年令
 	this->setAlive(true);								// 最初は生きてる
+	this->setAge(age);									// 指定された年令
 }														// returnもいらない
 
 void Nazo::setAge(int age)
