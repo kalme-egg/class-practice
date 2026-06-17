@@ -27,5 +27,8 @@ int main(void ){
 		cout << "fooが死んじゃった..." << endl;
 	}
 
+	foo.setAlive(true);									// セッタにアクセスできるので死んじゃった後に蘇生できる
+	foo.sayHi();										// おかえり!
+
 	return 0;
 }
