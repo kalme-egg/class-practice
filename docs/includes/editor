@@ -1,0 +1,109 @@
+<div style="margin-bottom: 10px;">
+    <select id="lang-select" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc; background: var(--md-default-bg-color); color: var(--md-default-fg-color);">
+        <option value="c_cpp">C++</option>
+        <option value="rust">Rust</option>
+    </select>
+</div>
+
+<div id="editor" style="width: 100%; height: 400px; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 4px;"></div>
+
+<button id="submit-code-btn" class="md-button md-button--primary">提出する :fontawesome-solid-paper-plane: </button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.js"></script>
+
+<script>
+    // --- 初期化 ---
+    const editor = ace.edit("editor");
+    editor.setFontSize(16);
+
+    // --- 言語別の初期コード（雛形）定義 ---
+    const boilerplates = {
+        "c_cpp": "",
+        "rust": ""
+    };
+
+    // 初期言語設定（C++）
+    editor.session.setMode("ace/mode/c_cpp");
+    editor.setValue(boilerplates["c_cpp"], -1); // -1でカーソルを先頭に
+
+    // --- サイトテーマとの同期機能 ---
+    function syncEditorTheme() {
+        // Zensical(Material for MkDocs)のテーマ属性を取得
+        const scheme = document.body.getAttribute('data-md-color-scheme');
+        
+        // slate（ダークモード）の場合はMonokai、それ以外はGitHubテーマを適用
+        if (scheme === 'slate') {
+            editor.setTheme("ace/theme/twilight");
+        } else {
+            editor.setTheme("ace/theme/github");
+        }
+    }
+
+    // ロード時に一度テーマを同期
+    syncEditorTheme();
+
+    // サイトのテーマ切り替え（bodyタグの属性変更）を監視して動的に同期
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'data-md-color-scheme') {
+                syncEditorTheme();
+            }
+        });
+    });
+    observer.observe(document.body, { attributes: true });
+
+
+    // --- 言語切り替えイベント ---
+    const langSelect = document.getElementById('lang-select');
+    langSelect.addEventListener('change', (e) => {
+        const selectedLang = e.target.value;
+        
+        // エディタのモード（シンタックスハイライト）を変更
+        editor.session.setMode("ace/mode/" + selectedLang);
+        
+        // エディタの中身を各言語の雛形に書き換え（※すでにコードを書いている場合は警告を出すなどの工夫もアリです）
+        editor.setValue(boilerplates[selectedLang], -1);
+    });
+
+
+    // --- 提出ボタン（Markdown側で #submit-code-btn をつけたボタン）のイベント ---
+    const submitBtn = document.getElementById('submit-code-btn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', async (e) => {
+            e.preventDefault(); 
+            
+            // 選択されている言語と、書かれたコードの両方を取得
+            const studentCode = editor.getValue(); 
+            const selectedLang = langSelect.value;
+            
+            console.log(`送信先: ラズパイ | 言語: ${selectedLang} | コード:`, studentCode);
+            alert$.next('まだできてないのですよ。');
+
+            const originalHTML = submitBtn.innerHTML;
+            submitBtn.innerHTML = 'ジャッジ中...';
+            submitBtn.style.pointerEvents = 'none';
+
+            try {
+                // TODO: ラズパイのAPIに合わせてエンドポイントを作成
+                /*
+                const res = await fetch('http://[ラズパイのIP]/judge', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        problem_id: 'point_class_01', // マクロなどで動的にするとさらに良いです
+                        language: selectedLang,       // ここで言語情報をサーバーに教える
+                        code: studentCode 
+                    })
+                });
+                */
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                alert$.next(`ん！未完成！ (${selectedLang} で実行)`);
+            } catch (error) {
+                console.error("エラー:", error);
+            } finally {
+                submitBtn.innerHTML = originalHTML;
+                submitBtn.style.pointerEvents = 'auto';
+            }
+        });
+    }
+</script>
