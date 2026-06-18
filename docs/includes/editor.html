@@ -13,7 +13,7 @@
             <button id="add-file-btn" style="cursor: pointer; padding: 2px 8px; border-radius: 4px; border: 1px solid #aaa; background: transparent;" title="新規ファイル追加">＋ ファイル追加</button>
             <select id="lang-select" style="padding: 2px 5px; border-radius: 4px; border: 1px solid #aaa; background: var(--md-default-bg-color, #fff); color: var(--md-default-fg-color, #333);">
                 <option value="c_cpp">C++</option>
-                <option value="rust">Rust</option>
+                <!-- <option value="rust">Rust</option> -->
             </select>
         </div>
     </div>
@@ -170,29 +170,60 @@
     });
 
     // 初期ファイルの作成
-    addFile("main.cpp", "#include <iostream>\n\nint main() {\n    std::cout << \"Hello!\" << std::endl;\n    return 0;\n}\n");
+    addFile("main.cpp");
 
     // === 提出処理 ===
     const submitBtn = document.getElementById('submit-code-btn');
     if (submitBtn) {
         submitBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            
-            // 提出用データの作成（全ファイルの名前と中身を配列にまとめる）
-            const submissionData = files.map(file => ({
-                filename: file.name,
-                content: file.session.getValue()
+
+            const submissionData = files.map(f => ({
+                file: f.name,
+                code: f.session.getValue()
             }));
-            
-            const payload = {
-                language: langSelect.value,
-                files: submissionData
-            };
 
-            console.log("=== ラズパイへ送信するJSONデータ ===");
-            console.log(JSON.stringify(payload, null, 2));
+            let currentFile = window.location.pathname.split("/").at(-2);
 
-            alert("提出データを作成しました！\nブラウザのデベロッパーツール(F12)の「Console」タブで送信されるJSONデータを確認してください。");
+            //judgeClient
+            const judgeClient = new WandboxJudgeClient();
+
+            try {
+                // --- テストケースの取得処理 ---
+                // 現在のURL（例: /e001/）を基準に相対パスで取得しにいく
+                const inResponse = await fetch('in.txt');
+                const outResponse = await fetch('out.txt');
+
+                // ファイルが存在しない場合（404エラーなど）の処理
+                if (!inResponse.ok || !outResponse.ok) {
+                    throw new Error("テストケースの取得に失敗しました。");
+                }
+
+                // テキストとして中身を取り出す
+                const inText = await inResponse.text();
+                const outText = await outResponse.text();
+
+                console.log("=== 取得したテストケース ===");
+                console.log("[in.txt]\n" + inText);
+                console.log("[out.txt]\n" + outText);
+
+                alert$.next("ジャッジ中です…");
+
+                const result = await judgeClient.submit(submissionData, inText);
+    
+                if (result.status === "ERROR") {
+                    console.log("コンパイルエラー:", result.message);
+                    alert$.next("CE (コンパイルエラー)");
+                } else if (result.output.trim() === outText.trim()) {
+                    alert$.next("AC (正解)");
+                } else {
+                    alert$.next("WA (不正解)");
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("エラー: " + error.message);
+            }
         });
     }
 </script>
