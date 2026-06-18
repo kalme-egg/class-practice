@@ -16,8 +16,7 @@ int main(void ){
 	bar.sayHi();
 	cout << endl;
 
-	bool result;
-	result = foo.kill();								// fooを殺す
+	foo.kill();											// fooを殺す
 	cout << "foo: " << endl;
 	foo.displayInfo();									// fooは多分ID0、0才で、死んでる
 	foo.sayHi();										// 死んじゃったので挨拶しない
