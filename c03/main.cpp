@@ -23,6 +23,7 @@ int main(void ){
 	cout << endl;
 
 	Nazo * habitat = new Nazo(3);						// new演算子は新しいオブジェクトを作って、そのポインタを返す
+	cout << "habitat: " << habitat << endl;				// この生息地のポインタは(*habitat)のthisに等しいはず
 	(*habitat).displayInfo();							// 生息地にくらしているのは、多分ID2、3才で生きてるなぞのいきもの
 	habitat->setAge(4);									// thisでできたことは普通のポインタでもできる
 	habitat->kill();									// 4才にして殺してみる
