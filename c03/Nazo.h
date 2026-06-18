@@ -9,7 +9,7 @@ private:
 	int age;
 	bool alive;
 
-	void setID(int ID);											// IDは外から変更してほしくないためprivate
+	void setID(int ID) {this->ID = ID;}						// IDは外から変更してほしくないためprivate
 	void setAlive(bool alive) {this->alive = alive;}
 	void setHeight(float height) {this->height = height;}
 public:
