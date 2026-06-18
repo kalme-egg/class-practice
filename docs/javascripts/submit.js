@@ -19,10 +19,14 @@ class WandboxJudgeClient extends AbstractJudgeClient {
             file: f.file, code: f.code
         }));
 
+        const compileStr = otherFiles.filter(f => f.file.split(".").at(-1) === "cpp").map(f => f.file).join("\n");
+        console.log(compileStr);
+
         const res = await runOnWandbox(mainFile.code, {
             compiler: "gcc-head",
             codes: otherFiles,
-            stdin: stdin
+            stdin: stdin,
+            compiler_option_raw: compileStr
         });
 
         // Wandbox特有のレスポンスを、共通のフォーマットに変換して返す
@@ -37,13 +41,14 @@ class WandboxJudgeClient extends AbstractJudgeClient {
 
 async function runOnWandbox(code, options = {}) {
   const body = {
-    compiler: options.compiler || "gcc-head",   // コンパイラ名（必須）
+    compiler: options.compiler || "g++20",   // コンパイラ名（必須）
     code: code,                                  // 実行したいコード（文字列）
     codes: options.codes || [],
     options: options.options || "",              // コンパイラオプション（カンマ区切り）
     stdin: options.stdin || "",                  // 標準入力
     // 必要に応じて追加
-    // "compiler-option-raw": "-O3\n-DDEBUG",
+    //ex -O3\n-DDEBUG
+    "compiler-option-raw": options.compiler_option_raw || "",
     // "runtime-option-raw": "",
     // save: true,  // trueにするとpermlinkが返ってくる
   };
