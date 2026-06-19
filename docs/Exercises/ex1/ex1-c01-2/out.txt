@@ -1,0 +1,4 @@
+foo: 
+  height: 13.5
+  age: 5
+  name: フー君
