@@ -1,3 +1,56 @@
-<script src="ex1-c01-1/givecode.js">
+<script>
+    window.initFiles = [
+        {
+            file: "main.cpp",
+            code: `#include <iostream>
+#include "Nazo.h"
+
+using namespace std;
+
+int main(void ){
+	Nazo foo;
+	foo.height = 13.5;
+	foo.age = 5;
+	foo.alive = true;
+
+	cout << "foo: " << endl;
+	cout << "  height: " << foo.height << endl;
+	cout << "  age: " << foo.age << endl;
+	cout << "  birthday: " << foo.birthMonth << "/" << foo.birthDay << endl; // 6/19 って出したいのだ！
+	return 0;
+}`
+        },
+
+        {
+            file: "Nazo.h",
+            code: `#ifndef _NAZO_H_
+#define _NAZO_H_
+
+class Nazo {
+public:
+	float height;
+	int age;
+	bool alive;
+
+	void sayHi(void );
+};
+
+#endif /* _NAZO_H_ */`
+        },
+
+        {
+            file: "Nazo.cpp",
+            code: `// ここは変えなくて良さそうなのだ！
+#include "Nazo.h"
+#include <iostream>
+
+using namespace std;
+
+void Nazo::sayHi(void )
+{
+	cout << "Hi!" << endl;
+	return;
+}`
+        }
+    ];
 </script>
-<button onclick="trigger()" class="md-button md-button--primary">コードを受け取る</button>
