@@ -112,7 +112,7 @@ extra_javascript = [
 # Read more:
 # - https://zensical.org/docs/setup/language/
 #
-language = "en"
+language = "js"
 
 # Zensical provides a number of feature toggles that change the behavior
 # of the documentation site.
