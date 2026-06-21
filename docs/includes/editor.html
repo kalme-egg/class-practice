@@ -1,68 +1,78 @@
-<!-- 複数ファイル対応 Ace Editor コンポーネント -->
+<!-- 複数ファイル対応 Ace Editor ＆ Zensical風ジャッジUI (SPA & 初期ファイル対応版) -->
 <div class="editor-wrapper" style="border: 1px solid var(--md-default-fg-color--lightest, #ccc); border-radius: 4px; overflow: hidden; background: var(--md-default-bg-color, #fff);">
     
-    <!-- ヘッダー部分：タブとコントロール -->
+    <!-- ヘッダー部分 -->
     <div class="editor-header" style="display: flex; background: var(--md-code-bg-color, #f5f5f5); border-bottom: 1px solid var(--md-default-fg-color--lightest, #ccc); align-items: flex-end; padding-top: 5px;">
-        <!-- タブが並ぶコンテナ -->
-        <div id="tabs-container" style="display: flex; flex-wrap: wrap; flex-grow: 1; padding-left: 5px;">
-            <!-- JSでタブが追加されます -->
-        </div>
-        
-        <!-- コントロールボタン群 -->
+        <div id="tabs-container" style="display: flex; flex-wrap: wrap; flex-grow: 1; padding-left: 5px;"></div>
         <div style="display: flex; padding: 0 10px 5px 10px; gap: 10px; align-items: center;">
-            <button id="add-file-btn" style="cursor: pointer; padding: 2px 8px; border-radius: 4px; border: 1px solid #aaa; background: transparent;" title="新規ファイル追加">＋ ファイル追加</button>
+            <button id="add-file-btn" style="cursor: pointer; padding: 2px 8px; border-radius: 4px; border: 1px solid #aaa; background: transparent;" title="新規ファイル追加">＋ ファイル</button>
             <select id="lang-select" style="padding: 2px 5px; border-radius: 4px; border: 1px solid #aaa; background: var(--md-default-bg-color, #fff); color: var(--md-default-fg-color, #333);">
                 <option value="c_cpp">C++</option>
-                <!-- <option value="rust">Rust</option> -->
             </select>
         </div>
     </div>
 
     <!-- エディタ本体 -->
-    <div id="editor" style="width: 100%; height: 400px;"></div>
+    <div id="editor" style="width: 100%; height: 350px;"></div>
 </div>
+
+<!-- コントロール群と結果表示エリア -->
+<div style="margin-top: 15px;">
+    <button id="submit-code-btn" class="md-button md-button--primary">提出する</button>
+    <span id="judge-loading" style="display: none; margin-left: 10px; font-weight: bold; color: var(--md-primary-fg-color);">
+        ジャッジ中... ⏳
+    </span>
+</div>
+
+<!-- リッチな判定結果が出るエリア -->
+<div id="judge-result-area" style="margin-top: 20px;"></div>
 
 <!-- Ace Editor本体 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.js"></script>
 
-<!-- 提出ボタン (テスト用) -->
-<button id="submit-code-btn" class="md-button md-button--primary">提出する :fontawesome-solid-paper-plane: </button>
-
 <style>
-    /* タブのスタイル定義 */
-    .file-tab {
-        padding: 6px 12px;
-        margin-right: 4px;
-        background: var(--md-default-bg-color, #e0e0e0);
-        border: 1px solid var(--md-default-fg-color--lightest, #ccc);
-        border-bottom: none;
-        border-radius: 4px 4px 0 0;
-        cursor: pointer;
-        font-family: monospace;
-        font-size: 14px;
-        color: var(--md-default-fg-color, #555);
-    }
-    .file-tab.active {
-        background: var(--md-default-bg-color, #fff);
-        font-weight: bold;
-        color: var(--md-typeset-color, #000);
-        border-bottom: 2px solid var(--md-primary-fg-color, #007bff);
-        margin-bottom: -1px; /* 下線をエディタ境界に重ねる */
-    }
-    .file-tab .delete-btn {
-        margin-left: 8px;
-        color: #ff4c4c;
-        cursor: pointer;
-        font-weight: bold;
-    }
+    /* タブのスタイル */
+    .file-tab { padding: 6px 12px; margin-right: 4px; background: var(--md-default-bg-color, #e0e0e0); border: 1px solid var(--md-default-fg-color--lightest, #ccc); border-bottom: none; border-radius: 4px 4px 0 0; cursor: pointer; font-family: monospace; font-size: 14px; color: var(--md-default-fg-color, #555); }
+    .file-tab.active { background: var(--md-default-bg-color, #fff); font-weight: bold; color: var(--md-typeset-color, #000); border-bottom: 2px solid var(--md-primary-fg-color, #007bff); margin-bottom: -1px; }
+    .file-tab .delete-btn { margin-left: 8px; color: #ff4c4c; cursor: pointer; font-weight: bold; }
+    /* コンソール風出力 */
+    .console-output { background: var(--md-code-bg-color, #1e1e1e); color: var(--md-code-fg-color, #d4d4d4); padding: 10px; border-radius: 4px; overflow-x: auto; font-family: monospace; font-size: 13px; margin-top: 10px; white-space: pre-wrap; }
 </style>
 
 <script>
-    // === エディタ初期化 ===
-    const editor = ace.edit("editor");
+(() => {
+    const currentScript = document.currentScript;
+    const container = currentScript.parentElement;
+    
+    const editorElement = container.querySelector("#editor");
+    if (!editorElement) return;
+
+    try {
+        const oldEditor = ace.edit(editorElement);
+        if (oldEditor) {
+            oldEditor.destroy();
+        }
+    } catch(e) {
+    }
+    
+    editorElement.innerHTML = "";
+    editorElement.removeAttribute("class");
+
+    const editor = ace.edit(editorElement);
     editor.setFontSize(16);
 
-    // サイトテーマ同期 (Zensical対応)
+    const resizeObserver = new ResizeObserver(() => {
+        editor.resize(true);
+        editor.renderer.updateFull();
+    });
+    resizeObserver.observe(editorElement);
+
+    setTimeout(() => {
+        editor.resize(true);
+        editor.renderer.updateFull();
+        editor.focus();
+    }, 100);
+
     function syncTheme() {
         const scheme = document.body.getAttribute('data-md-color-scheme');
         editor.setTheme(scheme === 'slate' ? "ace/theme/monokai" : "ace/theme/github");
@@ -70,160 +80,148 @@
     syncTheme();
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((m) => { if (m.attributeName === 'data-md-color-scheme') syncTheme(); });
-    }).observe(document.body, { attributes: true });
+    });
+    observer.observe(document.body, { attributes: true });
 
-    // === 複数ファイル状態管理 ===
-    let files = []; // { name: string, session: ace.EditSession } の配列
+    let files = [];
     let activeFileIndex = -1;
+    const tabsContainer = container.querySelector('#tabs-container');
+    const langSelect = container.querySelector('#lang-select');
 
-    // 言語ごとの初期モードと雛形
-    const langConfig = {
-        "c_cpp": { mode: "ace/mode/c_cpp", defaultExt: ".cpp" },
-        "rust":  { mode: "ace/mode/rust",  defaultExt: ".rs" }
-    };
-
-    const tabsContainer = document.getElementById('tabs-container');
-    const langSelect = document.getElementById('lang-select');
-
-    // ファイル追加関数
     function addFile(filename, initialContent = "") {
-        // 重複チェック
-        if (files.some(f => f.name === filename)) {
-            alert("同名のファイルが既に存在します。");
-            return;
-        }
-
-        const mode = langConfig[langSelect.value].mode;
-        
-        // ★重要: Ace Editorの「セッション」をファイルごとに新規作成
+        if (files.some(f => f.name === filename)) return;
+        const mode = langSelect.value === "rust" ? "ace/mode/rust" : "ace/mode/c_cpp";
         const session = new ace.EditSession(initialContent);
         session.setMode(mode);
-        
-        // やり直し(Undo)履歴の設定
         session.setUndoManager(new ace.UndoManager());
-
         files.push({ name: filename, session: session });
         switchToFile(files.length - 1);
         renderTabs();
     }
-
-    // ファイル削除関数
-    function deleteFile(index, event) {
-        event.stopPropagation(); // タブ切り替えが発火するのを防ぐ
-        if (files.length <= 1) {
-            alert("最後のファイルは削除できません。");
-            return;
-        }
-        if (confirm(`「${files[index].name}」を削除しますか？`)) {
-            files.splice(index, 1);
-            if (activeFileIndex >= files.length) {
-                switchToFile(files.length - 1);
-            } else if (activeFileIndex === index) {
-                switchToFile(0);
-            } else {
-                renderTabs();
-            }
-        }
-    }
-
-    // タブ切り替え関数
     function switchToFile(index) {
         activeFileIndex = index;
-        // ★重要: エディタの表示内容（セッション）をガチャンと切り替える
         editor.setSession(files[index].session);
         renderTabs();
     }
-
-    // タブのUI再描画関数
+    function deleteFile(index, event) {
+        event.stopPropagation();
+        if (files.length <= 1) return;
+        if (confirm(`「${files[index].name}」を削除しますか？`)) {
+            files.splice(index, 1);
+            switchToFile(Math.max(0, index - 1));
+        }
+    }
     function renderTabs() {
         tabsContainer.innerHTML = '';
         files.forEach((file, index) => {
             const tab = document.createElement('div');
             tab.className = `file-tab ${index === activeFileIndex ? 'active' : ''}`;
-            tab.innerHTML = `${file.name} <span class="delete-btn" title="削除">×</span>`;
-            
-            // タブクリックでファイル切り替え
+            tab.innerHTML = `${file.name} <span class="delete-btn">×</span>`;
             tab.addEventListener('click', () => switchToFile(index));
-            
-            // 削除ボタンイベント
             tab.querySelector('.delete-btn').addEventListener('click', (e) => deleteFile(index, e));
-            
             tabsContainer.appendChild(tab);
         });
     }
 
-    // === イベントリスナー登録 ===
-
-    // 「＋ ファイル追加」ボタン
-    document.getElementById('add-file-btn').addEventListener('click', () => {
-        const ext = langConfig[langSelect.value].defaultExt;
-        const filename = prompt(`新しいファイル名を入力してください\n(例: utils${ext}, Point.h)`, `new_file${ext}`);
-        if (filename) {
-            addFile(filename);
-        }
+    container.querySelector('#add-file-btn').addEventListener('click', () => {
+        const ext = langSelect.value === "rust" ? ".rs" : ".cpp";
+        const filename = prompt(`新しいファイル名を入力してください`, `class${ext}`);
+        if (filename) addFile(filename);
     });
 
-    // 言語変更時（現在開いている全ファイルのモードを変更）
     langSelect.addEventListener('change', () => {
-        const mode = langConfig[langSelect.value].mode;
+        const mode = langSelect.value === "rust" ? "ace/mode/rust" : "ace/mode/c_cpp";
         files.forEach(f => f.session.setMode(mode));
     });
 
-    // 初期ファイルの作成
-    addFile("main.cpp");
-
-    // === 提出処理 ===
-    const submitBtn = document.getElementById('submit-code-btn');
-    if (submitBtn) {
-        submitBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-
-            const submissionData = files.map(f => ({
-                file: f.name,
-                code: f.session.getValue()
-            }));
-
-            let currentFile = window.location.pathname.split("/").at(-2);
-
-            //judgeClient
-            const judgeClient = new WandboxJudgeClient();
-
-            try {
-                // --- テストケースの取得処理 ---
-                // 現在のURL（例: /e001/）を基準に相対パスで取得しにいく
-                const inResponse = await fetch('in.txt');
-                const outResponse = await fetch('out.txt');
-
-                // ファイルが存在しない場合（404エラーなど）の処理
-                if (!inResponse.ok || !outResponse.ok) {
-                    throw new Error("テストケースの取得に失敗しました。");
-                }
-
-                // テキストとして中身を取り出す
-                const inText = await inResponse.text();
-                const outText = await outResponse.text();
-
-                console.log("=== 取得したテストケース ===");
-                console.log("[in.txt]\n" + inText);
-                console.log("[out.txt]\n" + outText);
-
-                alert$.next("ジャッジ中です…");
-
-                const result = await judgeClient.submit(submissionData, inText);
-    
-                if (result.status === "ERROR") {
-                    console.log("コンパイルエラー:", result.message);
-                    alert$.next("CE (コンパイルエラー)");
-                } else if (result.output.trim() === outText.trim()) {
-                    alert$.next("AC (正解)");
-                } else {
-                    alert$.next("WA (不正解)");
-                }
-
-            } catch (error) {
-                console.error(error);
-                alert("エラー: " + error.message);
-            }
+    if (typeof window.initFiles !== 'undefined' && window.initFiles !== null) {
+        let hasMain = false;
+        window.initFiles.forEach(ele => {
+            addFile(ele.file, ele.code || "");
+            if (ele.file === "main.cpp" || ele.file === "main.rs") hasMain = true;
         });
+        
+        if (!hasMain) addFile("main.cpp", "");
+        
+        window.initFiles = null;
+    } else {
+        addFile("main.cpp", "");
     }
+
+    const resultArea = container.querySelector('#judge-result-area');
+    const loadingSpan = container.querySelector('#judge-loading');
+    const submitBtn = container.querySelector('#submit-code-btn');
+
+    function showResultUI(result, expectedOutput) {
+        let html = '';
+        if (result.status === "AC") {
+            html = `<div class="admonition success" style="border-left: 4px solid #00c853; background-color: rgba(0,200,83,0.1); padding: 15px; border-radius: 4px;"><p class="admonition-title" style="margin: 0 0 10px 0; font-weight: bold; color: #00c853;">🎉 正解 (AC)</p><p style="margin: 0;">やったね！</p></div>`;
+        } else if (result.status === "WA") {
+            html = `<div class="admonition warning" style="border-left: 4px solid #ff9100; background-color: rgba(255,145,0,0.1); padding: 15px; border-radius: 4px;"><p class="admonition-title" style="margin: 0 0 10px 0; font-weight: bold; color: #ff9100;">🤔 不正解 (WA)</p><p style="margin: 0 0 10px 0;">不正解です。プログラムを確認しましょう。</p><details class="quote" style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 4px;"><summary style="cursor: pointer; font-weight: bold;">詳細を見る (出力を比較)</summary><div style="margin-top: 10px; display: flex; gap: 10px;"><div style="flex: 1;"><strong>期待される出力:</strong><div class="console-output">${expectedOutput || "(なし)"}</div></div><div style="flex: 1;"><strong>あなたの出力:</strong><div class="console-output">${result.output || "(出力なし)"}</div></div></div></details></div>`;
+        } else {
+            const title = result.status === "CE" ? "🛠 コンパイルエラー (CE)" : "⚠️ 実行時エラー (RE)";
+            const msg = result.status === "CE" ? "コンパイルエラーです。プログラムを確認してください。" : "実行時エラーが発生しました。";
+            const cleanMessage = result.message.replace(/\/opt\/wandbox\/.*?prog\.cc/g, 'main.cpp');
+            html = `<div class="admonition failure" style="border-left: 4px solid #ff5252; background-color: rgba(255,82,82,0.1); padding: 15px; border-radius: 4px;"><p class="admonition-title" style="margin: 0 0 10px 0; font-weight: bold; color: #ff5252;">${title}</p><p style="margin: 0 0 10px 0;">${msg}</p><div class="console-output">${cleanMessage}</div></div>`;
+        }
+        resultArea.innerHTML = html;
+    }
+
+    submitBtn.addEventListener('click', async (e) => {
+        const judgeClient = new WandboxJudgeClient();
+
+        e.preventDefault();
+        
+        const mainFile = files.find(f => f.name === "main.cpp" || f.name === "main.rs");
+        if (!mainFile) {
+            alert("mainが見つかりません！");
+            return;
+        }
+
+        const mainCode = mainFile.session.getValue();
+        const otherFiles = files.filter(f => f !== mainFile).map(f => ({
+            name: f.name, code: f.session.getValue()
+        }));
+
+        submitBtn.disabled = true;
+        loadingSpan.style.display = 'inline';
+        resultArea.innerHTML = '';
+        
+        if (typeof alert$ !== 'undefined') alert$.next("ジャッジ中です…");
+
+        try {
+            // テストケースの取得 (Zensicalの現在のディレクトリから)
+            const inResponse = await fetch('in.txt');
+            const outResponse = await fetch('out.txt');
+            
+            if (!inResponse.ok || !outResponse.ok) {
+                throw new Error("テストケース (in.txt / out.txt) が見つかりません。同じディレクトリに配置されているか確認してください。");
+            }
+            
+            const inText = await inResponse.text();
+            const outText = await outResponse.text();
+            
+            // クライアントを呼び出してジャッジ実行
+            const result = await judgeClient.submit(mainCode, otherFiles, inText, outText, langSelect.value);
+            
+            // 画面にアドモニションを描画
+            showResultUI(result, outText);
+            
+            // Zensicalのトースト通知
+            if (typeof alert$ !== 'undefined') {
+                if (result.status === "AC") alert$.next("AC (正解)");
+                else if (result.status === "WA") alert$.next("WA (不正解)");
+                else alert$.next(result.status + " (エラー)");
+            }
+
+        } catch (error) {
+            console.error(error);
+            resultArea.innerHTML = `<div style="color: red; padding: 10px;">システムエラーが発生しました: ${error.message}</div>`;
+        } finally {
+            submitBtn.disabled = false;
+            loadingSpan.style.display = 'none';
+        }
+    });
+
+})();
 </script>

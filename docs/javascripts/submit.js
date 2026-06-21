@@ -1,40 +1,54 @@
+class JudgeResult {
+    constructor(status, message, output) {
+        this.status = status;   // AC, WA, CE, RE
+        this.message = message; // コンパイラメッセージ等
+        this.output = output;   // 標準出力
+    }
+}
+
 //すーぱー依存関係逆転マン
 class AbstractJudgeClient {
-
-  /**
-     * @param {Array} files [{name: "main.cpp", code: "..."}, ...]
-     * @param {string} stdin 標準入力
-     * @returns {Promise<{status: string, message: string, output: string}>}
-     */
-
-  async submit(files, stdin) {
+  async submit(mainCode, otherFiles, inText, outText, lang) {
     throw new Error("Not implemented");
   }
 }
 
 class WandboxJudgeClient extends AbstractJudgeClient {
-    async submit(files, stdin) {
-        const mainFile = files.find(f => f.file === "main.cpp");
-        const otherFiles = files.filter(f => f.file !== "main.cpp").map(f => ({
-            file: f.file, code: f.code
-        }));
+    async submit(mainCode, otherFiles, stdin, expectedOutput, lang) {
+        const compiler = lang === "rust" ? "rust-head" : "gcc-head";
+        const options = lang === "rust" ? "" : "warning,gnu++1y";
 
-        const compileStr = otherFiles.filter(f => f.file.split(".").at(-1) === "cpp").map(f => f.file).join("\n");
-        console.log(compileStr);
-
-        const res = await runOnWandbox(mainFile.code, {
-            compiler: "gcc-head",
-            codes: otherFiles,
-            stdin: stdin,
-            compiler_option_raw: compileStr
-        });
-
-        // Wandbox特有のレスポンスを、共通のフォーマットに変換して返す
-        return {
-            status: res.status === "0" ? "SUCCESS" : "ERROR",
-            message: res.compiler_message || "",
-            output: res.program_output || ""
+        const body = {
+            compiler: compiler,
+            options: options,
+            code: mainCode,
+            codes: otherFiles.map(f => ({ file: f.name, code: f.code })),
+            stdin: stdin
         };
+
+        const res = await fetch("https://wandbox.org/api/compile.json", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+
+        // コンパイルエラー
+        if (data.status !== "0" && data.compiler_message) {
+            return new JudgeResult("CE", data.compiler_message, "");
+        }
+        // 実行時エラー
+        if (data.status !== "0" && data.program_error) {
+              return new JudgeResult("RE", data.program_error, data.program_output || "");
+        }
+
+        const actualOut = (data.program_output || "").trim();
+        const expectOut = (expectedOutput || "").trim();
+
+        if (actualOut === expectOut) {
+            return new JudgeResult("AC", "All testcases passed.", actualOut);
+        } else {
+            return new JudgeResult("WA", "Output mismatch.", actualOut);
+        }
     }
 }
 
