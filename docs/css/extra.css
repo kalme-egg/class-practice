@@ -1,0 +1,6 @@
+.problem-code {
+    background-color: var(--md-code-bg-color);
+    border-radius: .4rem;
+    overflow: visible;
+    padding: .01em 1em;
+}
