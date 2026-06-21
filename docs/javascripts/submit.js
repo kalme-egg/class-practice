@@ -23,7 +23,7 @@ class WandboxJudgeClient extends AbstractJudgeClient {
             options: options,
             code: mainCode,
             codes: otherFiles.map(f => ({ file: f.name, code: f.code })),
-            compiler_option_raw: otherFiles.filter(f => f.file.split(".").at(-1) === "cpp").map(f => f.file).join("\n"),
+            "compiler-option-raw": otherFiles.filter(f => f.file.split(".").at(-1) === "cpp").map(f => f.file).join("\n"),
             stdin: stdin
         };
 
