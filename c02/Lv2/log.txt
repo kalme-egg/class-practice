@@ -1,0 +1,30 @@
+foo: 
+position: 0x7fff6530f9e0
+height: 8.5
+age: 0
+alive?: 1
+
+Hi!
+
+bar: 
+position: 0x7fff6530f9ec
+height: 18.5
+age: 10
+alive?: 1
+
+Hi!
+
+foo: 
+position: 0x7fff6530f9e0
+height: 8.5
+age: 0
+alive?: 0
+
+
+fooが死んじゃった...
+fooを殺した
+position: 0x7fff6530f9e0
+height: 8.5
+age: 0
+alive?: 0
+

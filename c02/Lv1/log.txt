@@ -1,0 +1,17 @@
+foo: 
+position: 0x7ffe324f9dac
+height: 13.5
+age: 5
+alive?: 1
+
+Hi!
+
+foo: 
+position: 0x7ffe324f9dac
+height: 17.5
+age: 9
+alive?: 0
+
+
+fooが死んじゃった...
+Hi!

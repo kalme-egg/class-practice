@@ -1,0 +1,43 @@
+foo: 
+ID: 0
+position: 0x7ffd495cda20
+height: 8.5
+age: 0
+alive?: 1
+
+Hi!
+
+bar: 
+ID: 1
+position: 0x7ffd495cda30
+height: 18.5
+age: 10
+alive?: 1
+
+Hi!
+
+foo: 
+ID: 0
+position: 0x7ffd495cda20
+height: 8.5
+age: 0
+alive?: 0
+
+
+habitat: 0x56f0f476e2c0
+ID: 2
+position: 0x56f0f476e2c0
+height: 11.5
+age: 3
+alive?: 1
+
+ID: 2
+position: 0x56f0f476e2c0
+height: 12.5
+age: 4
+alive?: 0
+
+bye.
+
+bye.
+bye.
