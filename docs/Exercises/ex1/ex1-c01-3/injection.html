@@ -1,0 +1,56 @@
+<script>
+    window.initFiles = [
+        {
+            file: "main.cpp",
+            code: `#include <iostream>
+#include "Nazo.h"
+
+using namespace std;
+
+int main(void ){
+	Nazo foo;
+	foo height = 13.5;
+	foo.age = 5;
+	foo.alive = true;
+
+	cout << "foo: " << endl;
+	cout << "  height: " << foo.height << endl;
+	cout << "  age: " << foo->age << endl;
+
+	foo.sayHi();
+	cout << endl;
+
+	return 0;
+}`
+        }, 
+        {
+            file: "Nazo.h",
+            code: `#ifndef _NAZO_H_
+#define _NAZO_H_
+
+class Nazo {
+
+	float height
+	int age;
+	bool alive;
+
+	void sayHi(void );
+}
+
+#endif /* _NAZO_H_ */`
+	    }, 
+        {
+            file: "Nazo.cpp",
+            code: `
+#include <iostream>
+
+using namespace std;
+
+void Nazo:sayHi(void )
+{
+	cout << "Hi!" >> endl;
+	return;
+}`
+        }
+    ];
+</script>
